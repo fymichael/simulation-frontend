@@ -1,51 +1,98 @@
-import { useState } from 'react';
+import PropTypes from 'prop-types';
+import { useState, useEffect } from 'react';
 
 // material-ui
-import Button from '@mui/material/Button';
+import { useTheme } from '@mui/material/styles';
 import Grid from '@mui/material/Grid';
-import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 
+// third-party
+import ReactApexChart from 'react-apexcharts';
+
 // project import
 import MainCard from 'components/MainCard';
-import IncomeAreaChart from './IncomeAreaChart';
+
+// ==============================|| NOMBRE DES SINISTRES AREA CHART ||============================== //
+
+function NombreSinistresChart({ slot, data }) {
+  const theme = useTheme();
+
+  const { secondary } = theme.palette.text;
+  const line = theme.palette.divider;
+
+  const [options, setOptions] = useState({
+    chart: {
+      height: 450,
+      type: 'area',
+      toolbar: {
+        show: false
+      }
+    },
+    dataLabels: {
+      enabled: false
+    },
+    stroke: {
+      curve: 'smooth',
+      width: 2
+    },
+    grid: {
+      strokeDashArray: 0
+    }
+  });
+
+  useEffect(() => {
+    setOptions((prevState) => ({
+      ...prevState,
+      colors: ['#FF0000'], // Rouge pour la courbe des sinistres
+      xaxis: {
+        categories: ['Jan', 'Fev', 'Mar', 'Avr', 'Mai', 'Jun', 'Jui', 'Aoû', 'Sept', 'Oct', 'Nov', 'Dec'],
+        labels: {
+          style: {
+            colors: new Array(12).fill(secondary)
+          }
+        },
+        axisBorder: {
+          show: true,
+          color: line
+        },
+        tickAmount: slot === 'month' ? 11 : 7
+      },
+      yaxis: {
+        labels: {
+          style: {
+            colors: [secondary]
+          }
+        }
+      },
+      grid: {
+        borderColor: line
+      }
+    }));
+  }, [secondary, line, theme, slot]);
+
+  return <ReactApexChart options={options} series={[{ name: 'Nombre des sinistres', data }]} type="area" height={450} />;
+}
+
+NombreSinistresChart.propTypes = {
+  slot: PropTypes.string,
+  data: PropTypes.array.isRequired
+};
 
 // ==============================|| DEFAULT - UNIQUE VISITOR ||============================== //
 
-export default function UniqueVisitorCard() {
-  const [slot, setSlot] = useState('week');
+export default function SinistreCard({sinistresData}) {
 
   return (
     <>
       <Grid container alignItems="center" justifyContent="space-between">
         <Grid item>
-          <Typography variant="h5">Unique Visitor</Typography>
-        </Grid>
-        <Grid item>
-          <Stack direction="row" alignItems="center" spacing={0}>
-            <Button
-              size="small"
-              onClick={() => setSlot('month')}
-              color={slot === 'month' ? 'primary' : 'secondary'}
-              variant={slot === 'month' ? 'outlined' : 'text'}
-            >
-              Month
-            </Button>
-            <Button
-              size="small"
-              onClick={() => setSlot('week')}
-              color={slot === 'week' ? 'primary' : 'secondary'}
-              variant={slot === 'week' ? 'outlined' : 'text'}
-            >
-              Week
-            </Button>
-          </Stack>
+          <Typography variant="h5">Représentation graphique de la fréquence des sinistres</Typography>
         </Grid>
       </Grid>
       <MainCard content={false} sx={{ mt: 1.5 }}>
         <Box sx={{ pt: 1, pr: 2 }}>
-          <IncomeAreaChart slot={slot} />
+          <NombreSinistresChart slot="month" data={sinistresData} />
         </Box>
       </MainCard>
     </>

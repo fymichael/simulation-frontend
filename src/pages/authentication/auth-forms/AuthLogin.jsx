@@ -13,7 +13,7 @@ import OutlinedInput from '@mui/material/OutlinedInput';
 import Stack from '@mui/material/Stack';
 import { Alert } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { storeToken, decodeToken } from '../authTokens';
+import { storeToken, decodeToken } from '../../../utils/authTokens';
 
 
 // third party
@@ -51,18 +51,19 @@ export default function AuthLogin({ isDemo = false }) {
       });
 
       const userStatus = response.data.user?.status;
+      const user = response.data.user;
+      console.log(user);
 
       if (userStatus === 1) {
-        setMessage("Votre demande est en attente de validation. Veuillez contacter l'administrateur.");
+        setMessage("Votre demande d'adhésion est en attente de validation. Veuillez contacter l'administrateur.");
       } else if (userStatus === 5) {
+        if (user.role === 2){
+          storeToken(response.data.access_token);
+          window.location.href = '/nyhavana/contrat-agence';
+        }
         storeToken(response.data.access_token);
-        const decoded = decodeToken();
-        if (decoded.role === 1) {
-          navigate('/nyhavana/dashboard');
-        }
-        else {
-          navigate('/nyhavana/colors');
-        }
+        navigate('/nyhavana/dashboard');
+
       } else if (userStatus === 0) {
         setMessage("Désolé, vous n'êtes plus autorisé à accéder au site.");
       } else if (userStatus === 3) {
@@ -72,7 +73,7 @@ export default function AuthLogin({ isDemo = false }) {
       }
     } catch (error) {
       console.error('Erreur API :', error);
-      setMessage('Une erreur est survenue lors de la tentative de connexion.');
+      setMessage('Email ou mot de passe erroné');
     } finally {
       setSubmitting(false);
     }
@@ -174,7 +175,7 @@ export default function AuthLogin({ isDemo = false }) {
                     size="large"
                     type="submit"
                     variant="contained"
-                    color="primary"
+                    color="error"
                   >
                     Connexion
                   </Button>

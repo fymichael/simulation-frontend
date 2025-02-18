@@ -14,7 +14,7 @@ import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
-import { decodeToken } from '../../../../../pages/authentication/authTokens';
+import { decodeToken } from '../../../../../utils/authTokens';
 
 
 // project import
@@ -28,6 +28,18 @@ import Transitions from 'components/@extended/Transitions';
 import SettingOutlined from '@ant-design/icons/SettingOutlined';
 import UserOutlined from '@ant-design/icons/UserOutlined';
 import avatar1 from 'assets/images/users/avatar-1.png';
+import avatar2 from 'assets/images/users/avatar-2.png';
+import avatar3 from 'assets/images/users/avatar-3.png';
+import avatar4 from 'assets/images/users/avatar-4.png';
+import avatar5 from 'assets/images/users/avatar-5.png';
+
+const avatars = {
+  'avatar-1.png': avatar1,
+  'avatar-2.png': avatar2,
+  'avatar-3.png': avatar3,
+  'avatar-4.png': avatar4,
+  'avatar-5.png': avatar5,
+};
 // tab panel wrapper
 function TabPanel({ children, value, index, ...other }) {
   return (
@@ -60,6 +72,8 @@ export default function Profile() {
   const name = token.username;
   const firstname = token.firstname;
   const departement = token.departement;
+  const photo = token.photo;
+  const imagePath = avatars[photo] || avatar1;
 
   const handleClose = (event) => {
     if (anchorRef.current && anchorRef.current.contains(event.target)) {
@@ -93,7 +107,7 @@ export default function Profile() {
         onClick={handleToggle}
       >
         <Stack direction="row" spacing={1.25} alignItems="center" sx={{ p: 0.5 }}>
-          <Avatar alt="profile user" src={avatar1} size="sm" />
+          <Avatar alt="profile user" src={imagePath} size="sm" />
           <Typography variant="subtitle1" sx={{ textTransform: 'capitalize' }}>
            {firstname}  {name} 
           </Typography>
@@ -126,7 +140,7 @@ export default function Profile() {
                     <Grid container justifyContent="space-between" alignItems="center">
                       <Grid item>
                         <Stack direction="row" spacing={1.25} alignItems="center">
-                          <Avatar alt="profile user" src={avatar1} sx={{ width: 32, height: 32 }} />
+                          <Avatar alt="profile user" src={imagePath} sx={{ width: 32, height: 32 }} />
                           <Stack>
                             <Typography variant="h6">{firstname} {name} </Typography>
                             <Typography variant="body2" color="text.secondary">

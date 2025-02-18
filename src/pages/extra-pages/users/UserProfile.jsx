@@ -1,29 +1,63 @@
-import React from "react";
-import { Avatar, Box, Button, Card, CardContent, Divider, Grid, Typography } from "@mui/material";
+import React, { useState, useEffect } from "react";
+import { Avatar, Box, Card, CardContent, Divider, Grid, Typography } from "@mui/material";
+import { decodeToken } from "../../../utils/authTokens";
+import axios from "axios";
 import avatar1 from 'assets/images/users/avatar-1.png';
-import { decodeToken } from '../../authentication/authTokens';
-import axios from 'axios';
+import avatar2 from 'assets/images/users/avatar-2.png';
+import avatar3 from 'assets/images/users/avatar-3.png';
+import avatar4 from 'assets/images/users/avatar-4.png';
+import avatar5 from 'assets/images/users/avatar-5.png';
 
+const avatars = {
+  'avatar-1.png': avatar1,
+  'avatar-2.png': avatar2,
+  'avatar-3.png': avatar3,
+  'avatar-4.png': avatar4,
+  'avatar-5.png': avatar5,
+};
 
 const UserProfile = () => {
   const token = decodeToken();
   const userId = token.sub;
+  const [users, setUser] = useState({
+    nom: "",
+    prenom: "",
+    adresse: "",
+    contact: "",
+    email: "",
+    numeroMatricule: "",
+    departement: { nom: "" },
+    role: { nom: "" },
+    photo: "",
+  });
 
-  const handle = async (idUser) => {
-    try {
-      await axios.put('http://localhost:3030/utilisateur', { idUser });
-      window.location.reload()
-    } catch (error) {
-      console.error('Erreur lors de la validation:', error);
-    }
-  };
+  useEffect(() => {
+    const getUserConnected = async () => {
+      try {
+        const response = await axios.get(`http://localhost:3030/utilisateur/${userId}`);
+        setUser(response.data);
+      } catch (error) {
+        console.error("Utilisateurs non récupérés:", error);
+      }
+    };
+
+    getUserConnected();
+  }, [userId]);
+
+  if (!users.role || !users.departement) {
+    return <Typography>Chargement des données...</Typography>;
+  }
 
   const user = {
-    name: "John Doe",
-    email: "john.doe@example.com",
-    role: "Admin",
-    bio: "Développeur passionné par la création d'applications performantes et élégantes.",
-    avatar: {avatar1},
+    name: users.nom || "N/A",
+    firstname: users.prenom || "N/A",
+    adresse: users.adresse || "N/A",
+    contact: users.contact || "N/A",
+    email: users.email || "N/A",
+    role: users.role.nom || "N/A",
+    departement: users.departement.nom || "N/A",
+    matricule: users.numeroMatricule || "N/A",
+    photo: avatars[users.photo] || avatar1,
   };
 
   return (
@@ -38,7 +72,6 @@ const UserProfile = () => {
         }}
       >
         <CardContent>
-          {/* Header avec l'avatar et les informations de l'utilisateur */}
           <Grid container spacing={3} alignItems="center">
             <Grid item xs={12} md={4}>
               <Box
@@ -50,26 +83,17 @@ const UserProfile = () => {
                 }}
               >
                 <Avatar
-                  src={user.avatar}
+                  src={user.photo}
                   alt={user.name}
                   sx={{ width: 120, height: 120, mb: 2 }}
                 />
-                <Button
-                  variant="outlined"
-                  size="small"
-                >
-                  Modifier
-                </Button>
               </Box>
             </Grid>
             <Grid item xs={12} md={8}>
               <Typography variant="h4" gutterBottom>
-                {user.name}
+                {user.name} {user.firstname}
               </Typography>
               <Typography color="textSecondary">{user.email}</Typography>
-              <Typography variant="body2" sx={{ mt: 2 }}>
-                {user.bio}
-              </Typography>
               <Typography
                 variant="subtitle2"
                 sx={{
@@ -87,26 +111,24 @@ const UserProfile = () => {
             </Grid>
           </Grid>
 
-          {/* Divider */}
           <Divider sx={{ my: 3 }} />
 
-          {/* Informations supplémentaires */}
           <Grid container spacing={2}>
             <Grid item xs={12} md={6}>
-              <Typography variant="subtitle1">Adresse :</Typography>
-              <Typography variant="body2">123 Rue Imaginaire, Ville</Typography>
+              <Typography variant="subtitle1">Adresse </Typography>
+              <Typography variant="body2">{user.adresse}</Typography>
             </Grid>
             <Grid item xs={12} md={6}>
-              <Typography variant="subtitle1">Téléphone :</Typography>
-              <Typography variant="body2">+33 6 12 34 56 78</Typography>
+              <Typography variant="subtitle1">Contact </Typography>
+              <Typography variant="body2">{user.contact}</Typography>
             </Grid>
             <Grid item xs={12} md={6}>
-              <Typography variant="subtitle1">Date d'inscription :</Typography>
-              <Typography variant="body2">01 Janvier 2023</Typography>
+              <Typography variant="subtitle1">Numero matricule </Typography>
+              <Typography variant="body2">{user.matricule}</Typography>
             </Grid>
             <Grid item xs={12} md={6}>
-              <Typography variant="subtitle1">Statut :</Typography>
-              <Typography variant="body2">Actif</Typography>
+              <Typography variant="subtitle1">Département </Typography>
+              <Typography variant="body2">{user.departement}</Typography>
             </Grid>
           </Grid>
         </CardContent>

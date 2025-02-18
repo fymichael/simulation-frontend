@@ -8,7 +8,6 @@ import FormControl from '@mui/material/FormControl';
 import FormGroup from '@mui/material/FormGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Stack from '@mui/material/Stack';
-import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 
 // project import
@@ -16,6 +15,7 @@ import MainCard from 'components/MainCard';
 
 // third-party
 import ReactApexChart from 'react-apexcharts';
+import { gray } from '@ant-design/colors';
 
 // chart options
 const columnChartOptions = {
@@ -54,7 +54,7 @@ const columnChartOptions = {
   tooltip: {
     y: {
       formatter(val) {
-        return `$ ${val} thousands`;
+        return `${val} Ar`;
       }
     }
   },
@@ -75,85 +75,78 @@ const columnChartOptions = {
 
 const initialSeries = [
   {
-    name: 'Income',
+    name: 'Encaissements',
     data: [180, 90, 135, 114, 120, 145]
   },
   {
-    name: 'Cost Of Sales',
+    name: 'Arriérés',
     data: [120, 45, 78, 150, 168, 99]
   }
 ];
 
 // ==============================|| SALES COLUMN CHART ||============================== //
 
-export default function SalesChart() {
+export default function EncaissementArriereChart() {
   const theme = useTheme();
 
   const [legend, setLegend] = useState({
-    income: true,
-    cos: true
+    encaissements: true,
+    arrieres: true
   });
 
-  const { income, cos } = legend;
+  const { encaissements, arrieres } = legend;
 
-  const { primary, secondary } = theme.palette.text;
-  const line = theme.palette.divider;
-
-  const warning = theme.palette.warning.main;
-  const primaryMain = theme.palette.primary.main;
-  const successDark = theme.palette.success.dark;
+  const xsDown = useMediaQuery(theme.breakpoints.down('sm'));
 
   const [series, setSeries] = useState(initialSeries);
+  const [options, setOptions] = useState(columnChartOptions);
 
   const handleLegendChange = (event) => {
     setLegend({ ...legend, [event.target.name]: event.target.checked });
   };
 
-  const xsDown = useMediaQuery(theme.breakpoints.down('sm'));
-  const [options, setOptions] = useState(columnChartOptions);
-
   useEffect(() => {
-    if (income && cos) {
+    if (encaissements && arrieres) {
       setSeries(initialSeries);
-    } else if (income) {
+    } else if (encaissements) {
       setSeries([
         {
-          name: 'Income',
+          name: 'Encaissements',
           data: [180, 90, 135, 114, 120, 145]
         }
       ]);
-    } else if (cos) {
+    } else if (arrieres) {
       setSeries([
         {
-          name: 'Cost Of Sales',
+          name: 'Arrièrés',
           data: [120, 45, 78, 150, 168, 99]
         }
       ]);
     } else {
       setSeries([]);
     }
-  }, [income, cos]);
+  }, [encaissements, arrieres]);
 
   useEffect(() => {
     setOptions((prevState) => ({
       ...prevState,
-      colors: !(income && cos) && cos ? [primaryMain] : [warning, primaryMain],
+      colors: !(encaissements && arrieres) && arrieres ? ['#808080'] : ['#FF0000', '#808080'],
       xaxis: {
         labels: {
           style: {
-            colors: [secondary, secondary, secondary, secondary, secondary, secondary]
+            colors: theme.palette.text.secondary
           }
         }
       },
       yaxis: {
         labels: {
           style: {
-            colors: [secondary]
+            colors: theme.palette.text.secondary
           }
         }
       },
       grid: {
-        borderColor: line
+        borderColor: theme.palette.divider
       },
       plotOptions: {
         bar: {
@@ -161,25 +154,22 @@ export default function SalesChart() {
         }
       }
     }));
-  }, [primary, secondary, line, warning, primaryMain, successDark, income, cos, xsDown]);
+  }, [theme, encaissements, arrieres, xsDown]);
 
   return (
-    <MainCard sx={{ mt: 1 }} content={false}>
+    <MainCard sx={{ mt: 2 }} content={false}>
       <Box sx={{ p: 2.5, pb: 0 }}>
         <Stack direction="row" alignItems="center" justifyContent="space-between">
-          <Stack spacing={1.5}>
-            <Typography variant="h6" color="secondary">
-              Net Profit
-            </Typography>
-            <Typography variant="h4">$1560</Typography>
-          </Stack>
           <FormControl component="fieldset">
             <FormGroup row>
               <FormControlLabel
-                control={<Checkbox color="warning" checked={income} onChange={handleLegendChange} name="income" />}
-                label="Income"
+                control={<Checkbox color="error" checked={encaissements} onChange={handleLegendChange} name="encaissements" />}
+                label="Encaissements"
               />
-              <FormControlLabel control={<Checkbox checked={cos} onChange={handleLegendChange} name="cos" />} label="Cost of Sales" />
+              <FormControlLabel 
+                control={<Checkbox color='secondary' checked={arrieres} onChange={handleLegendChange} name="arrieres" />} 
+                label="Arrièrés" 
+              />
             </FormGroup>
           </FormControl>
         </Stack>

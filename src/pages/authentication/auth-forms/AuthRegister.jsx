@@ -111,7 +111,7 @@ export default function AuthRegister() {
             };
 
             try {
-              await axios.post('http://localhost:3030/inscription', requestData);
+              await axios.post('http://localhost:3030/utilisateur', requestData);
               navigate('/');
             } catch (error) {
               console.error("Erreur lors de l'inscription :", error);
@@ -317,7 +317,7 @@ export default function AuthRegister() {
               {/* Bouton de soumission */}
               <Grid item xs={12}>
                 <AnimateButton>
-                  <Button disableElevation disabled={isSubmitting} fullWidth size="large" type="submit" variant="contained" color="primary">
+                  <Button disableElevation disabled={isSubmitting} fullWidth size="large" type="submit" variant="contained" color="error">
                     S'inscrire
                   </Button>
                 </AnimateButton>

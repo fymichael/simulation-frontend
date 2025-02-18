@@ -28,12 +28,12 @@ const areaChartOptions = {
   }
 };
 
-// ==============================|| INCOME AREA CHART ||============================== //
+// ==============================|| NOMBRE DES SINISTRES AREA CHART ||============================== //
 
-export default function IncomeAreaChart({ slot }) {
+export default function NombreSinistresChart({ slot }) {
   const theme = useTheme();
 
-  const { primary, secondary } = theme.palette.text;
+  const { secondary } = theme.palette.text;
   const line = theme.palette.divider;
 
   const [options, setOptions] = useState(areaChartOptions);
@@ -41,28 +41,12 @@ export default function IncomeAreaChart({ slot }) {
   useEffect(() => {
     setOptions((prevState) => ({
       ...prevState,
-      colors: [theme.palette.primary.main, theme.palette.primary[700]],
+      colors: ['#FF0000'], // Rouge pour la courbe des sinistres
       xaxis: {
-        categories:
-          slot === 'month'
-            ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-            : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        categories: ['Jan', 'Fev', 'Mar', 'Avr', 'Mai', 'Jun', 'Jui', 'Aoû', 'Sept', 'Oct', 'Nov', 'Dec'],
         labels: {
           style: {
-            colors: [
-              secondary,
-              secondary,
-              secondary,
-              secondary,
-              secondary,
-              secondary,
-              secondary,
-              secondary,
-              secondary,
-              secondary,
-              secondary,
-              secondary
-            ]
+            colors: new Array(12).fill(secondary)
           }
         },
         axisBorder: {
@@ -82,28 +66,20 @@ export default function IncomeAreaChart({ slot }) {
         borderColor: line
       }
     }));
-  }, [primary, secondary, line, theme, slot]);
+  }, [secondary, line, theme, slot]);
 
   const [series, setSeries] = useState([
     {
-      name: 'Page Views',
+      name: 'Nombre des sinistres',
       data: [0, 86, 28, 115, 48, 210, 136]
-    },
-    {
-      name: 'Sessions',
-      data: [0, 43, 14, 56, 24, 105, 68]
     }
   ]);
 
   useEffect(() => {
     setSeries([
       {
-        name: 'Page Views',
-        data: slot === 'month' ? [76, 85, 101, 98, 87, 105, 91, 114, 94, 86, 115, 35] : [31, 40, 28, 51, 42, 109, 100]
-      },
-      {
-        name: 'Sessions',
-        data: slot === 'month' ? [110, 60, 150, 35, 60, 36, 26, 45, 65, 52, 53, 41] : [11, 32, 45, 32, 34, 52, 41]
+        name: 'Nombre des sinistres',
+        data: [76, 85, 101, 98, 87, 105, 91, 114, 94, 86, 115, 35]
       }
     ]);
   }, [slot]);
@@ -111,4 +87,4 @@ export default function IncomeAreaChart({ slot }) {
   return <ReactApexChart options={options} series={series} type="area" height={450} />;
 }
 
-IncomeAreaChart.propTypes = { slot: PropTypes.string };
+NombreSinistresChart.propTypes = { slot: PropTypes.string };
