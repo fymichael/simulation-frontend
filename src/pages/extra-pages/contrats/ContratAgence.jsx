@@ -11,6 +11,7 @@ import {
     Typography,
     Stack,
     TablePagination,
+    TextField
 } from '@mui/material';
 import { PlusOutlined } from '@ant-design/icons';
 import axios from 'axios';
@@ -42,7 +43,8 @@ function formatNombre(number) {
 }
 
 const statusLabels = {
-    1: { color: 'warning', title: 'Echeance du contrat dans moins de 7 jours' },
+    1: { color: 'default', title: 'Echeance du contrat dans moins de 7 jours' },
+    3: { color: 'warning', title: 'Relance client' },
     0: { color: 'error', title: 'Contrat résilié' },
     5: { color: 'success', title: 'Actif' },
 };
@@ -90,6 +92,29 @@ const ContratAgence = () => {
         loadData();
     }, []);
 
+    const handleSearch = async (event) => {
+        const numeroPolice = event.target.value;
+
+        if (numeroPolice.trim() === '') {
+            fetchContrats();
+            return;
+        }
+
+        try {
+            const token = decodeToken();
+
+            const dat = {
+                id_departement: token?.id_departement,
+                numero_police: numeroPolice
+            }
+            const response = await axios.post(`http://localhost:3030/contrat-filter-agence`, dat);
+            setContrats(Array.isArray(response.data) ? response.data : []);
+        } catch (error) {
+            console.error('Erreur lors de la recherche du contrat:', error);
+            setContrats([]);
+        }
+    };
+
     const handleDetailModalOpen = (contrat) => {
         navigate(`/nyhavana/contrat/${contrat.id_contrat}`);
     };
@@ -109,14 +134,31 @@ const ContratAgence = () => {
 
     return (
         <>
-            <Button
-                variant="contained"
-                startIcon={<PlusOutlined />}
-                sx={{ mb: 2, bgcolor: 'red', ':hover': { bgcolor: 'darkred' }, color: 'white', ml:"80%" }}
-                onClick={handleNewContrat}
-            >
-                Nouveau Contrat
-            </Button>
+            <Box>
+                <Stack
+                    direction="row"
+                    spacing={2}
+                    alignItems="center"
+                    justifyContent="space-between"
+                    sx={{ mb: 5 }}
+                >
+                    <Stack direction="row" spacing={1} alignItems="center">
+                        <TextField
+                            label="Numéro de police"
+                            margin="normal"
+                            onChange={handleSearch}
+                        />
+                    </Stack>
+                    <Button
+                        variant="contained"
+                        startIcon={<PlusOutlined />}
+                        sx={{ bgcolor: 'red', ':hover': { bgcolor: 'darkred' }, color: 'white' }}
+                        onClick={handleNewContrat}
+                    >
+                        Nouveau Contrat
+                    </Button>
+                </Stack>
+            </Box>
             <MainCard
                 sx={{
                     maxWidth: { xs: 1200, lg: 1200 },
@@ -137,27 +179,31 @@ const ContratAgence = () => {
                                     <TableCell>Date Début</TableCell>
                                     <TableCell>Date D'échéance</TableCell>
                                     <TableCell>Montant Total</TableCell>
+                                    <TableCell>Matricule apporteur</TableCell>
                                 </TableRow>
                             </TableHead>
-                            <TableBody>
-                                {contrats.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((contrat, index) => (
-                                    <TableRow key={contrat.id_contrat}>
-                                        <TableCell>{index + 1 + page * rowsPerPage}</TableCell>
-                                        <TableCell
-                                            sx={{ cursor: 'pointer', color: 'blue' }}
-                                            onClick={() => handleDetailModalOpen(contrat)}
-                                        >
-                                            {contrat.numeroPolice}
-                                        </TableCell>
-                                        <TableCell>{formatDate(new Date(contrat.dateDebut))}</TableCell>
-                                        <TableCell>{formatDate(new Date(contrat.dateEcheance))}</TableCell>
-                                        <TableCell>{formatNombre(contrat.montantTotal)} Ar</TableCell>
-                                        <TableCell>
-                                            <ContratStatus status={contrat.status} />
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
+                            {contrats.length > 0 && (
+                                <TableBody>
+                                    {contrats.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((contrat, index) => (
+                                        <TableRow key={contrat.id_contrat}>
+                                            <TableCell>{index + 1 + page * rowsPerPage}</TableCell>
+                                            <TableCell
+                                                sx={{ cursor: 'pointer', color: 'blue' }}
+                                                onClick={() => handleDetailModalOpen(contrat)}
+                                            >
+                                                {contrat.numeroPolice}
+                                            </TableCell>
+                                            <TableCell>{formatDate(new Date(contrat.dateDebut))}</TableCell>
+                                            <TableCell>{formatDate(new Date(contrat.dateEcheance))}</TableCell>
+                                            <TableCell>{formatNombre(contrat.montantTotal)} Ar</TableCell>
+                                            <TableCell>{contrat.codeApporteur}</TableCell>
+                                            <TableCell>
+                                                <ContratStatus status={contrat.status} />
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            )}
                         </Table>
                     </TableContainer>
                     <TablePagination
@@ -170,6 +216,7 @@ const ContratAgence = () => {
                     />
                 </Box>
             </MainCard>
+
         </>
     );
 };

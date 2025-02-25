@@ -77,6 +77,7 @@ const columnChartOptions = {
 // ==============================|| COMBINED - SALES CHART CARD ||============================== //
 
 export default function EncaissementArriereCard({ encaissementsData, arrieresData }) {
+
   const theme = useTheme();
 
   const [legend, setLegend] = useState({
@@ -160,31 +161,33 @@ export default function EncaissementArriereCard({ encaissementsData, arrieresDat
   }, [theme, encaissements, arrieres, xsDown]);
 
   return (
-    <MainCard sx={{ mt: 2 }} content={false}>
-      <Grid container alignItems="center" justifyContent="space-between">
-        <Grid item>
-          <Typography variant="h5">Comparaison entre les arrières et les encaissements reçus</Typography>
+    <>
+      <Typography variant="h5">Comparaison entre les arrières et les encaissements reçus</Typography>
+      <MainCard sx={{ mt: 2 }} content={false}>
+        <Grid container alignItems="center" justifyContent="space-between">
+          <Grid item>
+          </Grid>
+          <Grid item>
+            <Stack direction="row" alignItems="center" justifyContent="flex-end">
+              <FormControl component="fieldset">
+                <FormGroup row>
+                  <FormControlLabel
+                    control={<Checkbox color="error" checked={encaissements} onChange={handleLegendChange} name="encaissements" />}
+                    label="Encaissements"
+                  />
+                  <FormControlLabel
+                    control={<Checkbox color='secondary' checked={arrieres} onChange={handleLegendChange} name="arrieres" />}
+                    label="Arriérés"
+                  />
+                </FormGroup>
+              </FormControl>
+            </Stack>
+          </Grid>
         </Grid>
-        <Grid item>
-          <Stack direction="row" alignItems="center" justifyContent="flex-end">
-            <FormControl component="fieldset">
-              <FormGroup row>
-                <FormControlLabel
-                  control={<Checkbox color="error" checked={encaissements} onChange={handleLegendChange} name="encaissements" />}
-                  label="Encaissements"
-                />
-                <FormControlLabel
-                  control={<Checkbox color='secondary' checked={arrieres} onChange={handleLegendChange} name="arrieres" />}
-                  label="Arriérés"
-                />
-              </FormGroup>
-            </FormControl>
-          </Stack>
-        </Grid>
-      </Grid>
-      <Box id="chart" sx={{ bgcolor: 'transparent', p: 2.5, pb: 0 }}>
-        <ReactApexChart options={options} series={series} type="bar" height={360} />
-      </Box>
-    </MainCard>
+        <Box id="chart" sx={{ bgcolor: 'transparent', p: 2.5, pb: 0 }}>
+          <ReactApexChart options={options} series={series} type="bar" height={360} />
+        </Box>
+      </MainCard>
+    </>
   );
 }

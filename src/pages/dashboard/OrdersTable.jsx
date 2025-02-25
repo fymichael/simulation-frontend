@@ -17,96 +17,21 @@ import { NumericFormat } from 'react-number-format';
 // project import
 import Dot from 'components/@extended/Dot';
 
-function createData(tracking_no, name, fat, carbs, protein) {
-  return { tracking_no, name, fat, carbs, protein };
-}
-
-const rows = [
-  createData(84564564, 'Camera Lens', 40, 2, 40570),
-  createData(98764564, 'Laptop', 300, 0, 180139),
-  createData(98756325, 'Mobile', 355, 1, 90989),
-  createData(98652366, 'Handset', 50, 1, 10239),
-  createData(13286564, 'Computer Accessories', 100, 1, 83348),
-  createData(86739658, 'TV', 99, 0, 410780),
-  createData(13256498, 'Keyboard', 125, 2, 70999),
-  createData(98753263, 'Mouse', 89, 2, 10570),
-  createData(98753275, 'Desktop', 185, 1, 98063),
-  createData(98753291, 'Chair', 100, 0, 14001)
-];
-
-function descendingComparator(a, b, orderBy) {
-  if (b[orderBy] < a[orderBy]) {
-    return -1;
-  }
-  if (b[orderBy] > a[orderBy]) {
-    return 1;
-  }
-  return 0;
-}
-
-function getComparator(order, orderBy) {
-  return order === 'desc' ? (a, b) => descendingComparator(a, b, orderBy) : (a, b) => -descendingComparator(a, b, orderBy);
-}
-
-function stableSort(array, comparator) {
-  const stabilizedThis = array.map((el, index) => [el, index]);
-  stabilizedThis.sort((a, b) => {
-    const order = comparator(a[0], b[0]);
-    if (order !== 0) {
-      return order;
-    }
-    return a[1] - b[1];
-  });
-  return stabilizedThis.map((el) => el[0]);
-}
-
+// Définition des colonnes
 const headCells = [
-  {
-    id: 'tracking_no',
-    align: 'left',
-    disablePadding: false,
-    label: 'Tracking No.'
-  },
-  {
-    id: 'name',
-    align: 'left',
-    disablePadding: true,
-    label: 'Product Name'
-  },
-  {
-    id: 'fat',
-    align: 'right',
-    disablePadding: false,
-    label: 'Total Order'
-  },
-  {
-    id: 'carbs',
-    align: 'left',
-    disablePadding: false,
-
-    label: 'Status'
-  },
-  {
-    id: 'protein',
-    align: 'right',
-    disablePadding: false,
-    label: 'Total Amount'
-  }
+  { id: 'numero_police', align: 'left', label: 'Numéro de Police' },
+  { id: 'montant', align: 'right', label: 'Montant' },
+  { id: 'date', align: 'left', label: 'Date' },
+  { id: 'status', align: 'left', label: 'Statut' }
 ];
 
-// ==============================|| ORDER TABLE - HEADER ||============================== //
-
-function OrderTableHead({ order, orderBy }) {
+// Composant pour l'en-tête du tableau
+function OrderTableHead() {
   return (
     <TableHead>
       <TableRow>
         {headCells.map((headCell) => (
-          <TableCell
-            key={headCell.id}
-            align={headCell.align}
-            padding={headCell.disablePadding ? 'none' : 'normal'}
-            sortDirection={orderBy === headCell.id ? order : false}
-          >
+          <TableCell key={headCell.id} align={headCell.align}>
             {headCell.label}
           </TableCell>
         ))}
@@ -115,26 +40,37 @@ function OrderTableHead({ order, orderBy }) {
   );
 }
 
+// Composant pour afficher le statut avec une couleur
 function OrderStatus({ status }) {
-  let color;
-  let title;
-
+  let color, title;
   switch (status) {
-    case 0:
-      color = 'warning';
-      title = 'Pending';
-      break;
     case 1:
-      color = 'success';
-      title = 'Approved';
+      color = 'default';
+      title = 'Paiement attendus';
       break;
-    case 2:
+    case 3:
       color = 'error';
-      title = 'Rejected';
+      title = 'Paiement annulé';
+      break;
+    case 5:
+      color = 'success';
+      title = 'Encaissement validé';
+      break;
+    case 0:
+      color = 'error';
+      title = 'Encaissement annulé';
+      break;
+    case 10:
+      color = 'error';
+      title = 'Remboursement client';
+      break;
+    case 15:
+      color = 'success';
+      title = 'Recouvrement client';
       break;
     default:
       color = 'primary';
-      title = 'None';
+      title = 'Inconnu';
   }
 
   return (
@@ -144,13 +80,18 @@ function OrderStatus({ status }) {
     </Stack>
   );
 }
-
-// ==============================|| ORDER TABLE ||============================== //
-
-export default function OrderTable() {
-  const order = 'asc';
-  const orderBy = 'tracking_no';
-
+function formatDate(date) {
+  const moisFrancais = [
+    "janvier", "février", "mars", "avril", "mai", "juin",
+    "juillet", "août", "septembre", "octobre", "novembre", "décembre"
+  ];
+  const jour = date.getDate();
+  const mois = moisFrancais[date.getMonth()];
+  const annee = date.getFullYear();
+  return `${jour} ${mois} ${annee}`;
+}
+// Composant principal qui prend les données en props
+export default function OrderTable({ data }) {
   return (
     <Box>
       <TableContainer
@@ -163,34 +104,23 @@ export default function OrderTable() {
           '& td, & th': { whiteSpace: 'nowrap' }
         }}
       >
-        <Table aria-labelledby="tableTitle">
-          <OrderTableHead order={order} orderBy={orderBy} />
+        <Table>
+          <OrderTableHead />
           <TableBody>
-            {stableSort(rows, getComparator(order, orderBy)).map((row, index) => {
-              const labelId = `enhanced-table-checkbox-${index}`;
-
-              return (
-                <TableRow
-                  hover
-                  role="checkbox"
-                  sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-                  tabIndex={-1}
-                  key={row.tracking_no}
-                >
-                  <TableCell component="th" id={labelId} scope="row">
-                    <Link color="secondary"> {row.tracking_no}</Link>
-                  </TableCell>
-                  <TableCell>{row.name}</TableCell>
-                  <TableCell align="right">{row.fat}</TableCell>
-                  <TableCell>
-                    <OrderStatus status={row.carbs} />
-                  </TableCell>
-                  <TableCell align="right">
-                    <NumericFormat value={row.protein} displayType="text" thousandSeparator prefix="$" />
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+            {data.map((row, index) => (
+              <TableRow key={index} hover>
+                <TableCell>
+                  <Link color="secondary">{row.numero_police}</Link>
+                </TableCell>
+                <TableCell align="right">
+                  <NumericFormat value={row.montant} displayType="text" thousandSeparator=" " suffix=" Ar" />
+                </TableCell>
+                <TableCell>{formatDate(new Date(row.date))}</TableCell>
+                <TableCell>
+                  <OrderStatus status={row.status} />
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </TableContainer>
@@ -198,6 +128,16 @@ export default function OrderTable() {
   );
 }
 
-OrderTableHead.propTypes = { order: PropTypes.any, orderBy: PropTypes.string };
+// Définition des types des props pour sécuriser l'utilisation du composant
+OrderTable.propTypes = {
+  data: PropTypes.arrayOf(
+    PropTypes.shape({
+      numero_police: PropTypes.string.isRequired,
+      montant: PropTypes.number.isRequired,
+      date: PropTypes.string.isRequired,
+      status: PropTypes.number.isRequired
+    })
+  ).isRequired
+};
 
 OrderStatus.propTypes = { status: PropTypes.number };

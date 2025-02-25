@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
     Box,
     Typography,
@@ -30,13 +30,20 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import PaymentIcon from '@mui/icons-material/Payment';
 import CarRepairIcon from '@mui/icons-material/CarRepair';
 import PersonIcon from '@mui/icons-material/Person';
-import { DeleteOutline } from '@mui/icons-material';
+import { DeleteOutline, QrCode } from '@mui/icons-material';
+import SecurityIcon from '@mui/icons-material/Security';
+import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
+import DescriptionIcon from '@mui/icons-material/Description';
+import EditIcon from '@mui/icons-material/Edit'; // Avenants
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import { useFormik } from "formik";
 import * as Yup from "yup";
 import { Delete } from '@mui/icons-material';
 import { decodeToken } from "utils/authTokens";
+import QRCode from "qrcode"
+import { FileOutlined } from '@ant-design/icons';
 
 
 function formatDate(date) {
@@ -66,7 +73,7 @@ function removeOneDay(date) {
 const DetailContrat = () => {
     const { idContrat } = useParams();
     const navigate = useNavigate();
-
+    const [genres, setGenres] = useState([]);
     const [exonerations, setExonerations] = useState([]);
     const [garanties, setGaranties] = useState([]);
     const [contrat, setContrat] = useState(null);
@@ -82,6 +89,18 @@ const DetailContrat = () => {
     const [datePaiement, setDatePaiement] = useState('');
     const [pourcentagePaiement, setPourcentagePaiement] = useState('');
     const [selectedGaranties, setSelectedGaranties] = useState([]);
+    const [selectedClientId, setSelectedClientId] = useState(null);
+    const [selectedVehiculeId, setSelectedVehiculeId] = useState(null);
+    const [openEditClientModal, setOpenEditClientModal] = useState(false);
+    const [openEditVehiculeModal, setOpenEditVehiculeModal] = useState(false);
+    const [marques, setMarques] = useState([]);
+    const [carrosseries, setCarrosseries] = useState([]);
+    const [energies, setEnergies] = useState([]);
+    const token = decodeToken();
+    const role = token?.role;
+
+    const canvasRef = useRef(null);
+    const [qrCodeData, setQrCodeData] = useState("");
 
     const handleCloseModal = () => setOpenModal(false);
     const handleOpenModal = () => {
@@ -93,6 +112,67 @@ const DetailContrat = () => {
     const handleCloseModalEncaissement = () => setOpenModalEncaissement(false);
     const handleOpenModalEncaissement = () => {
         setOpenModalEncaissement(true);
+    };
+
+    const fetchClientById = async (id) => {
+        try {
+            const response = await axios.get(`http://localhost:3030/client/${id}`);
+            return response.data;
+        } catch (error) {
+            console.error('Erreur lors de la récupération des données du client:', error);
+        }
+    };
+
+    const fetchVehiculeById = async (id) => {
+        try {
+            const response = await axios.get(`http://localhost:3030/vehicule/${id}`);
+            return response.data;
+        } catch (error) {
+            console.error('Erreur lors de la récupération des données du vehicule:', error);
+        }
+    };
+
+    const handleCloseEditClientModal = () => setOpenEditClientModal(false);
+    const handleOpenEditClientModal = async (idClient) => {
+        setSelectedClientId(idClient);
+        const clientData = await fetchClientById(idClient);
+        formikEditClient.setValues(clientData);
+        setOpenEditClientModal(true);
+    };
+
+    const handleCloseEditVehiculeModal = () => setOpenEditVehiculeModal(false);
+    const handleOpenEditVehiculeModal = async (idVehicule) => {
+        setSelectedVehiculeId(idVehicule);
+        const VehiculeData = await fetchVehiculeById(idVehicule);
+        formikVehicule.setValues(VehiculeData);
+        setOpenEditVehiculeModal(true);
+    };
+
+    const loadMarques = async () => {
+        try {
+            const response = await axios.get('http://localhost:3030/marques');
+            setMarques(response.data);
+        } catch (error) {
+            console.error("Erreur lors du chargement des marques", error);
+        }
+    };
+
+    const loadCarrosseries = async () => {
+        try {
+            const response = await axios.get('http://localhost:3030/carrosseries');
+            setCarrosseries(response.data);
+        } catch (error) {
+            console.error("Erreur lors du chargement des carrosseries", error);
+        }
+    };
+
+    const loadEnergies = async () => {
+        try {
+            const response = await axios.get("http://localhost:3030/energies");
+            setEnergies(response.data);
+        } catch (error) {
+            console.error("Erreur lors du chargement des énergies", error);
+        }
     };
 
     const relanceClient = async (contrat) => {
@@ -119,7 +199,7 @@ const DetailContrat = () => {
                     },
                 }
             );
-            navigate('/nyhavana/contrats')
+            alert('Relance effectuer')
         } catch (error) {
             console.error('Erreur lors de la résiliation: ', error);
         }
@@ -154,13 +234,25 @@ const DetailContrat = () => {
             try {
                 setLoading(true);
                 const response = await axios.get(`http://localhost:3030/contrat/${idContrat}`);
+                const response1 = await axios.get(`http://localhost:3030/attestation-actif/${idContrat}`);
                 setContrat(response.data);
+                setQrCodeData(`Numéro police : ${response.data.numeroPolice}, Numéro attestation : ${response1.data}, Numéro contrat : ${response.data.numeroContrat}`);
             } catch (err) {
                 console.error(err);
             } finally {
                 setLoading(false);
             }
         };
+
+        const fetchGenres = async () => {
+            try {
+                const response = await axios.get('http://localhost:3030/genres');
+                setGenres(response.data);
+            } catch (error) {
+                console.error('Erreur lors de la récupération des genres:', error);
+            }
+        };
+
         const fetchTarif = async () => {
             try {
                 setLoading(true);
@@ -207,11 +299,15 @@ const DetailContrat = () => {
             }
         };
 
+        fetchGenres();
         fetchEncaissements();
         fetchContrat();
         fetchTarif();
         fetchSinistres();
         fetchProceduresPaiements();
+        loadMarques();
+        loadCarrosseries();
+        loadEnergies();
     }, [idContrat]);
 
     const formikEncaissement = useFormik({
@@ -276,11 +372,15 @@ const DetailContrat = () => {
             duree: "",
             reduction: "",
             id_exoneration: "",
+            numero_attestation: "",
+            numero_contrat: ""
         },
         validationSchema: Yup.object({
             date_debut: Yup.string().required("La date de début du contrat est obligatoire"),
             duree: Yup.string().required("La durée du contrat est obligatoire"),
             reduction: Yup.string().required("La réduction du contrat est obligatoire"),
+            numero_attestation: Yup.string().required("Le numéro d'attestation du contrat est obligatoire"),
+            numero_contrat: Yup.string().required("Le numéro du contrat est obligatoire"),
             id_exoneration: Yup.string().required("L'exonération du contrat est obligatoire"),
         }),
         onSubmit: async (values) => {
@@ -300,6 +400,9 @@ const DetailContrat = () => {
                     date_paiement: paiement.date,
                     pourcentage: paiement.pourcentage,
                 })),
+                numero_attestation: values.numero_attestation,
+                numero_contrat: values.numero_contrat
+
             };
 
             try {
@@ -312,6 +415,97 @@ const DetailContrat = () => {
             }
         },
     });
+
+    const vehicule = {
+        id_vehicule: "" || null,
+        id_marque: "",
+        id_carrosserie: "",
+        id_energie: "",
+        model: "",
+        numero_chassit: "",
+        puissance: "",
+        numero_moteur: "",
+        nombre_place: "",
+        plaque_immatriculation: "",
+        date_circulation: "",
+        valeur_nette: "",
+    };
+
+    const formikVehicule = useFormik({
+        initialValues: vehicule,
+        validationSchema: Yup.object({
+            id_marque: Yup.string().required("La marque est obligatoire"),
+            id_carrosserie: Yup.string().required("La carrosserie est obligatoire"),
+            id_energie: Yup.string().required("L'énergie est obligatoire"),
+            model: Yup.string().required("Le modèle est obligatoire"),
+            numero_chassit: Yup.string().required("Le numéro de châssis est obligatoire"),
+            puissance: Yup.number()
+                .required("La puissance est obligatoire")
+                .positive("La puissance doit être un nombre positif"),
+            numero_moteur: Yup.string().required("Le numéro de moteur est obligatoire"),
+            nombre_place: Yup.number()
+                .required("Le nombre de places est obligatoire")
+                .positive("Le nombre de places doit être un nombre positif"),
+            plaque_immatriculation: Yup.string().required("La plaque d'immatriculation est obligatoire"),
+            date_circulation: Yup.date().required("La date de circulation est obligatoire"),
+            valeur_nette: Yup.number()
+                .required("La valeur nette est obligatoire")
+                .positive("La valeur nette doit être un nombre positif"),
+        }),
+        onSubmit: async (values) => {
+            try {
+                const data = {
+                    id_avenant: 4,
+                    id_contrat: idContrat
+                }
+                await axios.post(`http://localhost:3030/avenant-contrat`, data);
+                await axios.put(`http://localhost:3030/vehicule/${selectedVehiculeId}`, values);
+                window.location.reload();
+            } catch (error) {
+                console.error('Échec de la mise à jour du client:', error);
+            }
+        },
+    });
+
+    const formikEditClient = useFormik({
+        initialValues: {
+            nom: '',
+            prenom: '',
+            date_naissance: '',
+            adresse: '',
+            contact: '',
+            email: '',
+            mdp: '',
+            cin: '',
+            id_genre: '',
+        },
+        validationSchema: Yup.object({
+            nom: Yup.string().required('Nom requis'),
+            prenom: Yup.string().required('Prénom requis'),
+            date_naissance: Yup.string().required('Date de naissance requise'),
+            adresse: Yup.string().required('Adresse requise'),
+            contact: Yup.string().required('Contact requis'),
+            email: Yup.string().email('Email invalide').required('Email requis'),
+            mdp: Yup.string().required('Mot de passe requis'),
+            cin: Yup.string().required('Numéro CIN requis'),
+            id_genre: Yup.string().required('Genre requis'),
+        }),
+        onSubmit: async (values) => {
+            try {
+                const data = {
+                    id_avenant: 5,
+                    id_contrat: idContrat
+                }
+                await axios.post(`http://localhost:3030/avenant-contrat`, data);
+                await axios.put(`http://localhost:3030/client/${selectedClientId}`, values);
+                window.location.reload();
+            } catch (error) {
+                console.error('Échec de la mise à jour du client:', error);
+            }
+        },
+    });
+
+
 
     // Fonctions pour charger les données
     const loadExonerations = async () => {
@@ -373,6 +567,22 @@ const DetailContrat = () => {
         window.location.reload();
     };
 
+    const handleAnnulerAvenant = async (idAvenant) => {
+        const confirmation = window.confirm("Êtes-vous sûr de vouloir annuler cet avenant ?");
+
+        if (!confirmation) {
+            return;
+        }
+
+        const data = {
+            id_contrat: idContrat
+        }
+
+        console.log(data);
+        await axios.put(`http://localhost:3030/annuler-avenant/${idAvenant}`, data);
+        window.location.reload();
+    };
+
     const handleChange = (event) => {
         const value = event.target.value;
         setSelectedGaranties((prevState) =>
@@ -388,8 +598,23 @@ const DetailContrat = () => {
         5: { color: 'success', title: 'Paiement reçu' },
     };
 
+    const statusAvenantLabels = {
+        0: { color: 'error', title: 'Avenant annuler' },
+        1: { color: 'success', title: 'Avenant valider' },
+    };
+
     function PaiementStatus({ status }) {
         const { color, title } = statusLabels[status] || { color: 'default', title: 'Inconnu' };
+        return (
+            <Stack direction="row" spacing={1} alignItems="center">
+                <Dot color={color} />
+                <Typography>{title}</Typography>
+            </Stack>
+        );
+    }
+
+    function AvenantStatus({ status }) {
+        const { color, title } = statusAvenantLabels[status] || { color: 'default', title: 'Inconnu' };
         return (
             <Stack direction="row" spacing={1} alignItems="center">
                 <Dot color={color} />
@@ -403,6 +628,16 @@ const DetailContrat = () => {
     };
 
     const sumEncaissements = encaissement.reduce((sum, encaissemente) => sum + encaissemente.montant, 0);
+
+    useEffect(() => {
+        if (qrCodeData) {
+            QRCode.toCanvas(canvasRef.current, qrCodeData, (error) => {
+                if (error) {
+                    console.error('Erreur lors de la génération du QR Code:', error);
+                }
+            });
+        }
+    }, [qrCodeData]);
 
     if (loading) {
         return <CircularProgress />;
@@ -478,7 +713,7 @@ const DetailContrat = () => {
                     <Grid item xs={12}>
                         <Paper elevation={2} sx={{ padding: 2, bgcolor: '#ffe6e6', borderRadius: 2 }}>
                             <Typography variant="h6" sx={{ color: 'red', display: 'flex', alignItems: 'center' }}>
-                                Détails du Contrat
+                                <DescriptionIcon sx={{ marginRight: 1 }} /> Détails du Contrat
                             </Typography>
                             <Stack spacing={1}>
                                 <Typography><strong>Durée :</strong> {contrat.duree} mois</Typography>
@@ -517,7 +752,7 @@ const DetailContrat = () => {
                     <Grid item xs={12}>
                         <Paper elevation={2} sx={{ padding: 2, bgcolor: '#ffe6e6', borderRadius: 2 }}>
                             <Typography variant="h6" sx={{ color: 'red', display: 'flex', alignItems: 'center' }}>
-                                <PaymentIcon sx={{ marginRight: 1 }} /> Garanties
+                                <SecurityIcon sx={{ marginRight: 1 }} /> Garanties
                             </Typography>
                             <ul>
                                 <li> Résponsabilités civils </li>
@@ -555,7 +790,7 @@ const DetailContrat = () => {
                             <Grid item xs={12}>
                                 <Paper elevation={2} sx={{ padding: 2, bgcolor: '#ffe6e6', borderRadius: 2 }}>
                                     <Typography variant="h6" sx={{ color: 'red', display: 'flex', alignItems: 'center' }}>
-                                        <PaymentIcon sx={{ marginRight: 1 }} /> Liste des encaissements
+                                        <MonetizationOnIcon sx={{ marginRight: 1 }} /> Liste des encaissements
                                     </Typography>
                                     <Table>
                                         <TableHead>
@@ -563,7 +798,6 @@ const DetailContrat = () => {
                                                 <TableCell>Date</TableCell>
                                                 <TableCell>Montant</TableCell>
                                                 <TableCell>Numéro de la pièce</TableCell>
-                                                <TableCell>Type de paiement</TableCell>
                                                 <TableCell>Status</TableCell>
                                             </TableRow>
                                         </TableHead>
@@ -572,16 +806,61 @@ const DetailContrat = () => {
                                                 <TableRow key={index}>
                                                     <TableCell>{formatDate(new Date(enc.dateEncaissement))}</TableCell>
                                                     <TableCell>{formatNombre(enc.montant)} </TableCell>
-                                                    <TableCell> {enc.numeroPiece} </TableCell>
+                                                    <TableCell> {enc.numeroPiece ?? 'espèces'} </TableCell>
                                                     <TableCell>
                                                         <PaiementStatus status={enc.status} />
                                                     </TableCell>
+                                                    {enc.status !== 0 && role === 1 && (
+                                                        <TableCell>
+                                                            <DeleteOutline
+                                                                sx={{ cursor: 'pointer', color: 'gray' }}
+                                                                onClick={() => handleAnnulerEncaissement(enc.idEncaissement)}
+                                                            />
+                                                        </TableCell>
+                                                    )}
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </Paper>
+                            </Grid>
+                        ) : (
+                            <Typography variant="body1" color="textSecondary">
+                            </Typography>
+                        )}
+                    </Grid>
+
+                    <Grid item xs={12}>
+                        {contrat?.avenants.length > 0 ? (
+                            <Grid item xs={12}>
+                                <Paper elevation={2} sx={{ padding: 2, bgcolor: '#ffe6e6', borderRadius: 2 }}>
+                                    <Typography variant="h6" sx={{ color: 'red', display: 'flex', alignItems: 'center' }}>
+                                        <EditIcon sx={{ marginRight: 1 }} /> Liste des avenants
+                                    </Typography>
+                                    <Table>
+                                        <TableHead>
+                                            <TableRow>
+                                                <TableCell>Nom</TableCell>
+                                                <TableCell>Date</TableCell>
+                                                <TableCell>Status</TableCell>
+                                            </TableRow>
+                                        </TableHead>
+                                        <TableBody>
+                                            {contrat?.avenants.map((avenant, index) => (
+                                                <TableRow key={index}>
+                                                    <TableCell> {avenant.avenant?.nom}</TableCell>
+                                                    <TableCell>{formatDate(new Date(avenant.dateCreation))}</TableCell>
                                                     <TableCell>
-                                                        <DeleteOutline
-                                                            sx={{ cursor: 'pointer', color: 'gray' }}
-                                                            onClick={() => handleAnnulerEncaissement(enc.idEncaissement)}
-                                                        />
+                                                        <AvenantStatus status={avenant.status} />
                                                     </TableCell>
+                                                    {avenant?.status !== 0 && role === 1 && (
+                                                        <TableCell>
+                                                            <DeleteOutline
+                                                                sx={{ cursor: 'pointer', color: 'gray' }}
+                                                                onClick={() => handleAnnulerAvenant(avenant?.idAvenantContrat)}
+                                                            />
+                                                        </TableCell>
+                                                    )}
                                                 </TableRow>
                                             ))}
                                         </TableBody>
@@ -597,7 +876,7 @@ const DetailContrat = () => {
                     <Grid item xs={12}>
                         <Paper elevation={2} sx={{ padding: 2, bgcolor: '#ffe6e6', borderRadius: 2 }}>
                             <Typography variant="h6" sx={{ color: 'red', display: 'flex', alignItems: 'center' }}>
-                                Facturation
+                                <AttachMoneyIcon sx={{ marginRight: 1 }} />Facturation
                             </Typography>
                             <Table sx={{ mt: 2 }}>
                                 <TableHead>
@@ -631,6 +910,266 @@ const DetailContrat = () => {
                             </Typography>
                         </Paper>
                     </Grid>
+
+                    <Grid item xs={12}>
+                        <Paper elevation={2} sx={{ padding: 2, bgcolor: '#ffe6e6', borderRadius: 2 }}>
+                            <Typography variant="h6" align="left" sx={{ color: 'red' }}>
+                                <FileOutlined sx={{ marginRight: 1 }} /> Listes des numéros d'attestations
+                            </Typography>
+                            <ul>
+                                {contrat?.numeroAttestation.map((numero, index) => (
+                                    <li key={index}>{numero}</li>
+                                ))}
+                            </ul>
+                        </Paper>
+                    </Grid>
+
+                    <Grid item xs={12}>
+                        <Paper elevation={2} sx={{ padding: 2, bgcolor: 'white', borderRadius: 2 }}>
+                            <Typography variant="h6" align="center" sx={{ color: 'red' }}>
+                                <QrCode sx={{ marginRight: 1 }} /> QR Code du Contrat
+                            </Typography>
+                            <canvas ref={canvasRef} style={{ marginTop: '20px', marginLeft: 'auto', marginRight: 'auto', display: 'block' }} />
+                        </Paper>
+                    </Grid>
+
+                    <Modal open={openEditClientModal} onClose={handleCloseEditClientModal}>
+                        <Box
+                            sx={{
+                                padding: 3,
+                                bgcolor: '#ffffff',
+                                borderRadius: 2,
+                                maxWidth: 600,
+                                maxHeight: '80vh',
+                                margin: 'auto',
+                                mt: 5,
+                                boxShadow: 24,
+                                overflowY: 'auto',
+                            }}
+                        >
+                            <Typography variant="h4" ml={5}>
+                                Modifier le client
+                            </Typography>
+                            <form onSubmit={formikEditClient.handleSubmit}>
+                                <TextField
+                                    fullWidth
+                                    label="Nom"
+                                    margin="normal"
+                                    {...formikEditClient.getFieldProps('nom')}
+                                    error={formikEditClient.touched.nom && Boolean(formikEditClient.errors.nom)}
+                                    helperText={formikEditClient.touched.nom && formikEditClient.errors.nom}
+                                />
+                                <TextField
+                                    fullWidth
+                                    label="Prénom"
+                                    margin="normal"
+                                    {...formikEditClient.getFieldProps('prenom')}
+                                    error={formikEditClient.touched.prenom && Boolean(formikEditClient.errors.prenom)}
+                                    helperText={formikEditClient.touched.prenom && formikEditClient.errors.prenom}
+                                />
+                                <TextField
+                                    fullWidth
+                                    label="Date de naissance"
+                                    margin="normal"
+                                    type="date"
+                                    InputLabelProps={{
+                                        shrink: true,
+                                    }}
+                                    {...formikEditClient.getFieldProps('date_naissance')}
+                                    error={formikEditClient.touched.date_naissance && Boolean(formikEditClient.errors.date_naissance)}
+                                    helperText={formikEditClient.touched.date_naissance && formikEditClient.errors.date_naissance}
+                                />
+                                <TextField
+                                    fullWidth
+                                    label="Adresse"
+                                    margin="normal"
+                                    {...formikEditClient.getFieldProps('adresse')}
+                                    error={formikEditClient.touched.adresse && Boolean(formikEditClient.errors.adresse)}
+                                    helperText={formikEditClient.touched.adresse && formikEditClient.errors.adresse}
+                                />
+                                <TextField
+                                    fullWidth
+                                    label="Contact"
+                                    margin="normal"
+                                    {...formikEditClient.getFieldProps('contact')}
+                                    error={formikEditClient.touched.contact && Boolean(formikEditClient.errors.contact)}
+                                    helperText={formikEditClient.touched.contact && formikEditClient.errors.contact}
+                                />
+                                <TextField
+                                    fullWidth
+                                    label="Email"
+                                    margin="normal"
+                                    {...formikEditClient.getFieldProps('email')}
+                                    error={formikEditClient.touched.email && Boolean(formikEditClient.errors.email)}
+                                    helperText={formikEditClient.touched.email && formikEditClient.errors.email}
+                                />
+                                <TextField
+                                    fullWidth
+                                    label="Mot de passe"
+                                    margin="normal"
+                                    type="password"
+                                    {...formikEditClient.getFieldProps('mdp')}
+                                    error={formikEditClient.touched.mdp && Boolean(formikEditClient.errors.mdp)}
+                                    helperText={formikEditClient.touched.mdp && formikEditClient.errors.mdp}
+                                />
+                                <TextField
+                                    fullWidth
+                                    label="Numéro CIN"
+                                    margin="normal"
+                                    {...formikEditClient.getFieldProps('cin')}
+                                    error={formikEditClient.touched.cin && Boolean(formikEditClient.errors.cin)}
+                                    helperText={formikEditClient.touched.cin && formikEditClient.errors.cin}
+                                />
+                                <FormControl fullWidth sx={{ marginTop: 2 }}>
+                                    <InputLabel id="genre-label">Genre</InputLabel>
+                                    <Select
+                                        labelId="genre-label"
+                                        {...formikEditClient.getFieldProps('id_genre')}
+                                        error={formikEditClient.touched.id_genre && Boolean(formikEditClient.errors.id_genre)}
+                                    >
+                                        <MenuItem value="">
+                                            <em>-- Sélectionnez un genre --</em>
+                                        </MenuItem>
+                                        {genres.map((item) => (
+                                            <MenuItem key={item.id_genre} value={item.id_genre}>
+                                                {item.nom}
+                                            </MenuItem>
+                                        ))}
+                                    </Select>
+                                    {formikEditClient.touched.id_genre && formikEditClient.errors.id_genre && (
+                                        <FormHelperText error>{formikEditClient.errors.id_genre}</FormHelperText>
+                                    )}
+                                </FormControl>
+                                <Button type="submit" color='error' variant="contained" fullWidth sx={{ mt: 2 }}>
+                                    Modifier
+                                </Button>
+                            </form>
+                        </Box>
+                    </Modal>
+
+                    <Modal open={openEditVehiculeModal} onClose={handleCloseEditVehiculeModal}>
+                        <Box
+                            sx={{
+                                padding: 3,
+                                bgcolor: '#ffffff',
+                                borderRadius: 2,
+                                maxWidth: 600,
+                                maxHeight: '80vh',
+                                margin: 'auto',
+                                mt: 5,
+                                boxShadow: 24,
+                                overflowY: 'auto',
+                            }}
+                        >
+                            <Typography variant="h4" ml={5}>
+                                Modifier le vehicule
+                            </Typography>
+                            <form onSubmit={formikVehicule.handleSubmit}>
+                                <Grid container spacing={3}>
+                                    {/* Sélectionner marque */}
+                                    < Grid item xs={12} sm={6}>
+                                        <FormControl fullWidth>
+                                            <InputLabel>Marque</InputLabel>
+                                            <Select
+                                                name="id_marque"
+                                                value={formikVehicule.values.id_marque}
+                                                {...formikVehicule.getFieldProps('id_marque')}
+                                            >
+                                                {marques.map((marque) => (
+                                                    <MenuItem key={marque.id_marque} value={marque.id_marque}>
+                                                        {marque.nom}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                            {formikVehicule.touched.id_marque && formikVehicule.errors.id_marque ? (
+                                                <Typography color="error">{formikVehicule.errors.id_marque}</Typography>
+                                            ) : null}
+                                        </FormControl>
+                                    </Grid>
+
+                                    {/* Sélectionner carrosserie */}
+                                    <Grid item xs={12} sm={6}>
+                                        <FormControl fullWidth>
+                                            <InputLabel>Carrosserie</InputLabel>
+                                            <Select
+                                                name="id_carrosserie"
+                                                value={formikVehicule.values.id_carrosserie}
+                                                {...formikVehicule.getFieldProps('id_carrosserie')}
+
+                                            >
+                                                {carrosseries.map((carrosserie) => (
+                                                    <MenuItem key={carrosserie.id_carrosserie} value={carrosserie.id_carrosserie}>
+                                                        {carrosserie.nom}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                            {formikVehicule.touched.id_carrosserie && formikVehicule.errors.id_carrosserie ? (
+                                                <Typography color="error">{formikVehicule.errors.id_carrosserie}</Typography>
+                                            ) : null}
+                                        </FormControl>
+                                    </Grid>
+
+                                    {/* Sélectionner énergie */}
+                                    <Grid item xs={12} sm={6}>
+                                        <FormControl fullWidth>
+                                            <InputLabel>Énergie</InputLabel>
+                                            <Select
+                                                name="id_energie"
+                                                value={formikVehicule.values.id_energie}
+                                                {...formikVehicule.getFieldProps('id_energie')}
+
+                                            >
+                                                {energies.map((energie) => (
+                                                    <MenuItem key={energie.id_energie} value={energie.id_energie}>
+                                                        {energie.nom}
+                                                    </MenuItem>
+                                                ))}
+                                            </Select>
+                                            {formikVehicule.touched.id_energie && formikVehicule.errors.id_energie ? (
+                                                <Typography color="error">{formikVehicule.errors.id_energie}</Typography>
+                                            ) : null}
+                                        </FormControl>
+                                    </Grid>
+
+                                    {/* Champs texte */}
+                                    {[
+                                        { name: "model", label: "Modèle" },
+                                        { name: "numero_chassit", label: "Numéro de Châssis" },
+                                        { name: "puissance", label: "Puissance", type: "number" },
+                                        { name: "numero_moteur", label: "Numéro de Moteur" },
+                                        { name: "nombre_place", label: "Nombre de Places", type: "number" },
+                                        { name: "plaque_immatriculation", label: "Plaque d'immatriculation" },
+                                        { name: "date_circulation", label: "Date de Circulation", type: "date" },
+                                        { name: "valeur_nette", label: "Valeur Nette", type: "number" },
+                                    ].map(({ name, label, type = "text" }) => (
+                                        <Grid item xs={12} sm={6} key={name}>
+                                            <TextField
+                                                fullWidth
+                                                label={label}
+                                                name={name}
+                                                type={type}
+                                                value={formikVehicule.values[name]}
+                                                {...formikVehicule.getFieldProps(name)}
+                                                error={formikVehicule.touched[name] && Boolean(formikVehicule.errors[name])}
+                                                helperText={formikVehicule.touched[name] && formikVehicule.errors[name]}
+                                            />
+                                        </Grid>
+                                    ))}
+                                </Grid>
+                                <Grid item xs={12}>
+                                    <Button
+                                        type="submit"
+                                        variant="contained"
+                                        color="error"
+                                        fullWidth
+                                        sx={{ mt: 2 }}
+                                    >
+                                        modifier
+                                    </Button>
+                                </Grid>
+                            </form>
+                        </Box>
+                    </Modal>
 
                     <Modal open={openModalEncaissement} onClose={handleCloseModalEncaissement}>
                         <Box
@@ -786,6 +1325,28 @@ const DetailContrat = () => {
                                         />
                                     </Grid>
 
+                                    <Grid item xs={12}>
+                                        <TextField
+                                            fullWidth
+                                            label="Numéro du nouveau contrat"
+                                            margin="normal"
+                                            {...formikContratInfo.getFieldProps("numero_contrat")}
+                                            error={formikContratInfo.touched.numero_contrat && Boolean(formikContratInfo.errors.numero_contrat)}
+                                            helperText={formikContratInfo.touched.numero_contrat && formikContratInfo.errors.numero_contrat}
+                                        />
+                                    </Grid>
+
+                                    <Grid item xs={12}>
+                                        <TextField
+                                            fullWidth
+                                            label="Numéro de la nouvelle attestation"
+                                            margin="normal"
+                                            {...formikContratInfo.getFieldProps("numero_attestation")}
+                                            error={formikContratInfo.touched.numero_attestation && Boolean(formikContratInfo.errors.numero_attestation)}
+                                            helperText={formikContratInfo.touched.numero_attestation && formikContratInfo.errors.numero_attestation}
+                                        />
+                                    </Grid>
+
                                     <Grid item sm={12}>
                                         <FormControl fullWidth sx={{ mt: 2 }}>
                                             <InputLabel id="exoneration-label">Exonération</InputLabel>
@@ -913,7 +1474,7 @@ const DetailContrat = () => {
                         </Button>
                     )}
 
-                    {new Date() === removeOneDay(contrat.dateEcheance) || contrat.status !== 5 && (
+                    {contrat.status !== 5 && (
                         <Button
                             variant="contained"
                             onClick={handleOpenModal}
@@ -942,7 +1503,27 @@ const DetailContrat = () => {
                         Visualiser le contrat
                     </Button>
 
-                    {Math.round(sumEncaissements) < Math.round(contrat.montantTotal) && (
+                    {contrat.status !== 0 && (
+                        <>
+                            <Button
+                                variant="contained"
+                                onClick={() => handleOpenEditClientModal(contrat?.client?.idClient)}
+                                sx={{ ml: 2, mt: 3, bgcolor: 'grey', ':hover': { bgcolor: 'darkgrey' }, color: 'white' }}
+                            >
+                                Modifier le client
+                            </Button>
+
+                            <Button
+                                variant="contained"
+                                onClick={() => handleOpenEditVehiculeModal(contrat?.vehicule?.idVehicule)}
+                                sx={{ ml: 2, mt: 3, bgcolor: 'grey', ':hover': { bgcolor: 'darkgrey' }, color: 'white' }}
+                            >
+                                Modifier le vehicule
+                            </Button>
+                        </>
+                    )}
+
+                    {contrat.status !== 0 && Math.round(sumEncaissements) < Math.round(contrat.montantTotal) && (
                         <Button
                             variant="contained"
                             onClick={handleOpenModalEncaissement}

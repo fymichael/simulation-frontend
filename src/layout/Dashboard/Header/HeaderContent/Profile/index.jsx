@@ -32,6 +32,7 @@ import avatar2 from 'assets/images/users/avatar-2.png';
 import avatar3 from 'assets/images/users/avatar-3.png';
 import avatar4 from 'assets/images/users/avatar-4.png';
 import avatar5 from 'assets/images/users/avatar-5.png';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 
 const avatars = {
   'avatar-1.png': avatar1,
@@ -107,7 +108,7 @@ export default function Profile() {
         onClick={handleToggle}
       >
         <Stack direction="row" spacing={1.25} alignItems="center" sx={{ p: 0.5 }}>
-          <Avatar alt="profile user" src={imagePath} size="sm" />
+          <AccountCircleIcon />
           <Typography variant="subtitle1" sx={{ textTransform: 'capitalize' }}>
            {firstname}  {name} 
           </Typography>
@@ -140,7 +141,7 @@ export default function Profile() {
                     <Grid container justifyContent="space-between" alignItems="center">
                       <Grid item>
                         <Stack direction="row" spacing={1.25} alignItems="center">
-                          <Avatar alt="profile user" src={imagePath} sx={{ width: 32, height: 32 }} />
+                          <AccountCircleIcon style={{width:'50px', height:'50px'}} />
                           <Stack>
                             <Typography variant="h6">{firstname} {name} </Typography>
                             <Typography variant="body2" color="text.secondary">

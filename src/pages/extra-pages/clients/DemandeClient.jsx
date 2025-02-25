@@ -51,6 +51,7 @@ function formatDate(date) {
 const statusLabels = {
     1: { color: 'warning', title: 'En attente' },
     0: { color: 'error', title: 'Demande refusé' },
+    3: { color: 'default', title: 'Relance client' },
     5: { color: 'success', title: 'Demande approuvé' },
 };
 

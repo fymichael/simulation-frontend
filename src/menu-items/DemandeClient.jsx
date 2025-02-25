@@ -1,9 +1,9 @@
 // assets
-import { UserOutlined} from '@ant-design/icons';
+import SendToMobileIcon from '@mui/icons-material/SendToMobile';
 
 // icons
 const icons = {
-  UserOutlined
+  SendToMobileIcon
 };
 
 // ==============================|| MENU ITEMS - EXTRA PAGES ||============================== //
@@ -18,7 +18,7 @@ const demandes = {
       title: 'Gestions des demandes',
       type: 'item',
       url: '/nyhavana/demandes',
-      icon: icons.UserOutlined,
+      icon: icons.SendToMobileIcon,
     }
   ]
 };

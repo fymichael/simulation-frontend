@@ -7,6 +7,7 @@ import avatar2 from 'assets/images/users/avatar-2.png';
 import avatar3 from 'assets/images/users/avatar-3.png';
 import avatar4 from 'assets/images/users/avatar-4.png';
 import avatar5 from 'assets/images/users/avatar-5.png';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 
 const avatars = {
   'avatar-1.png': avatar1,
@@ -82,11 +83,7 @@ const UserProfile = () => {
                   flexDirection: "column",
                 }}
               >
-                <Avatar
-                  src={user.photo}
-                  alt={user.name}
-                  sx={{ width: 120, height: 120, mb: 2 }}
-                />
+                <AccountCircleIcon style={{width: '130px', height: '130px'}}/>
               </Box>
             </Grid>
             <Grid item xs={12} md={8}>

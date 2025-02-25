@@ -11,17 +11,19 @@ import {
     Typography,
     Stack,
     TablePagination,
+    TextField,
+    CircularProgress,
+    IconButton
 } from '@mui/material';
-import { PlusOutlined } from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Dot from 'components/@extended/Dot';
 import MainCard from 'components/MainCard';
 
-
 function formatDate(date) {
     if (!(date instanceof Date) || isNaN(date)) {
-        throw new Error("L'entrée doit être un objet Date valide.");
+        return 'Date invalide';
     }
 
     const moisFrancais = [
@@ -29,11 +31,7 @@ function formatDate(date) {
         "juillet", "août", "septembre", "octobre", "novembre", "décembre"
     ];
 
-    const jour = date.getDate();
-    const mois = moisFrancais[date.getMonth()];
-    const annee = date.getFullYear();
-
-    return `${jour} ${mois} ${annee}`;
+    return `${date.getDate()} ${moisFrancais[date.getMonth()]} ${date.getFullYear()}`;
 }
 
 function formatNombre(number) {
@@ -41,7 +39,7 @@ function formatNombre(number) {
 }
 
 const statusLabels = {
-    1: { color: 'primary', title: 'Echeance du contrat dans moins de 7 jours' },
+    1: { color: 'default', title: 'Échéance du contrat dans moins de 7 jours' },
     0: { color: 'error', title: 'Contrat résilié' },
     5: { color: 'success', title: 'Actif' },
 };
@@ -63,49 +61,46 @@ const ContratTable = () => {
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [isLoading, setIsLoading] = useState(true);
 
-    const fetchContrats = async () => {
-        try {
-            const response = await axios.get('http://localhost:3030/contrats');
-            setContrats(response.data);
-        } catch (error) {
-            console.error('Erreur lors de la récupération des contrats :', error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const deleteSimulation = async () => {
-        try {
-            await axios.delete('http://localhost:3030/contrat-simulation');
-        } catch (error) {
-            console.error('Erreur lors de la suppression de la simulation:', error);
-        }
-    };
-
-    const updateEchusContrat = async () => {
-        try {
-            await axios.put('http://localhost:3030/update-echus');
-        } catch (error) {
-            console.error('Erreur lors de la mise à jour des échéances :', error);
-        }
-    };
-
     useEffect(() => {
-        const loadData = async () => {
+        const fetchContrats = async () => {
             setIsLoading(true);
-            await deleteSimulation();
-            await fetchContrats();
+            try {
+                const response = await axios.get('http://localhost:3030/contrats');
+                setContrats(Array.isArray(response.data) ? response.data : []);
+            } catch (error) {
+                console.error('Erreur lors de la récupération des contrats :', error);
+                setContrats([]);
+            } finally {
+                setIsLoading(false);
+            }
         };
-
-        loadData();
+        
+        fetchContrats();
     }, []);
-
-    useEffect(() => {
-        console.log('ok')
-        const UpdateStatusContratEchus = setInterval(updateEchusContrat, 5000);
     
-        return () => clearInterval(UpdateStatusContratEchus);
-      }, []);
+    const handleSearch = async (event) => {
+
+        const numeroPolice = event.target.value;
+        if (numeroPolice.trim() === '') {
+            try {
+                const response = await axios.get('http://localhost:3030/contrats');
+                setContrats(Array.isArray(response.data) ? response.data : []);
+            } catch (error) {
+                console.error('Erreur lors de la récupération des contrats :', error);
+                setContrats([]);
+            }
+            return;
+        }
+        
+        try {
+            const response = await axios.get(`http://localhost:3030/contrat-filter/${numeroPolice}`);
+            console.log('type response data : ',typeof(response.data))
+            setContrats(Array.isArray(response.data) ? response.data : []);
+        } catch (error) {
+            console.error('Erreur lors de la recherche du contrat:', error);
+            setContrats([]);
+        }
+    };
 
     const handleDetailModalOpen = (contrat) => {
         navigate(`/nyhavana/contrat/${contrat.id_contrat}`);
@@ -115,7 +110,7 @@ const ContratTable = () => {
         navigate(`/nyhavana/new-contrat`);
     };
 
-    const handlePageChange = (newPage) => {
+    const handlePageChange = (_, newPage) => {
         setPage(newPage);
     };
 
@@ -125,18 +120,37 @@ const ContratTable = () => {
     };
 
     if (isLoading) {
-        return <p>Chargement des données...</p>; // Ou un indicateur de chargement (spinner)
+        return <CircularProgress />;
     }
+
     return (
         <>
-            <Button
-                variant="contained"
-                startIcon={<PlusOutlined />}
-                sx={{ mb: 2, bgcolor: 'red', ':hover': { bgcolor: 'darkred' }, color: 'white', ml:"80%" }}
-                onClick={handleNewContrat}
-            >
-                Nouveau Contrat
-            </Button>
+            <Box>
+                <Stack
+                    direction="row"
+                    spacing={2}
+                    alignItems="center"
+                    justifyContent="space-between"
+                    sx={{ mb: 5 }}
+                >
+                    <Stack direction="row" spacing={1} alignItems="center">
+                        <TextField 
+                            label="Numéro de police" 
+                            margin="normal" 
+                            onChange={handleSearch} 
+                        />
+                    </Stack>
+                    <Button
+                        variant="contained"
+                        startIcon={<PlusOutlined />}
+                        sx={{ bgcolor: 'red', ':hover': { bgcolor: 'darkred' }, color: 'white' }}
+                        onClick={handleNewContrat}
+                    >
+                        Nouveau Contrat
+                    </Button>
+                </Stack>
+            </Box>
+
             <MainCard
                 sx={{
                     maxWidth: { xs: 1200, lg: 1200 },
@@ -157,6 +171,8 @@ const ContratTable = () => {
                                     <TableCell>Date Début</TableCell>
                                     <TableCell>Date D'échéance</TableCell>
                                     <TableCell>Montant Total</TableCell>
+                                    <TableCell>Matricule apporteur</TableCell>
+                                    <TableCell>Statut</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -172,6 +188,7 @@ const ContratTable = () => {
                                         <TableCell>{formatDate(new Date(contrat.dateDebut))}</TableCell>
                                         <TableCell>{formatDate(new Date(contrat.dateEcheance))}</TableCell>
                                         <TableCell>{formatNombre(contrat.montantTotal)} Ar</TableCell>
+                                        <TableCell>{contrat.codeApporteur}</TableCell>
                                         <TableCell>
                                             <ContratStatus status={contrat.status} />
                                         </TableCell>

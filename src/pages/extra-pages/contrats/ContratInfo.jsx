@@ -196,7 +196,10 @@ const ContratSection = () => {
             id_classification: "",
             reduction: "",
             id_exoneration: "",
-            id_type_paiement: ""
+            id_type_paiement: "",
+            code_apporteur: "",
+            numero_attestation: "",
+            numero_attestation: "",
         },
         validationSchema: Yup.object({
             date_debut: Yup.string().required("La date de début du contrat est obligatoire"),
@@ -205,6 +208,9 @@ const ContratSection = () => {
             reduction: Yup.string().required("La réduction du contrat est obligatoire"),
             id_exoneration: Yup.string().required("L'exonération du contrat est obligatoire"),
             id_type_paiement: Yup.string().required("Le type de paiement du contrat est obligatoire"),
+            code_apporteur: Yup.string().required("Le code de l'apporteur est obligatoire"),
+            numero_attestation: Yup.string().required("Le numéro attestation est obligatoire"),
+            numero_contrat: Yup.string().required("Le numéro contrat est obligatoire"),
         }),
         onSubmit: async (values) => {
             const token = decodeToken();
@@ -224,7 +230,10 @@ const ContratSection = () => {
                     date_paiement: paiement.date,
                     pourcentage: paiement.pourcentage,
                 })),
-                id_type_paiement: values.id_type_paiement
+                id_type_paiement: values.id_type_paiement,
+                code_apporteur: values.code_apporteur,
+                numero_attestation: values.numero_attestation,
+                numero_contrat: values.numero_contrat
             };
 
             try {
@@ -336,6 +345,36 @@ const ContratSection = () => {
                                     {...formikContratInfo.getFieldProps("reduction")}
                                     error={formikContratInfo.touched.reduction && Boolean(formikContratInfo.errors.reduction)}
                                     helperText={formikContratInfo.touched.reduction && formikContratInfo.errors.reduction}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={12}>
+                                <TextField
+                                    fullWidth
+                                    label="Code apporteur"
+                                    margin="normal"
+                                    {...formikContratInfo.getFieldProps("code_apporteur")}
+                                    error={formikContratInfo.touched.code_apporteur && Boolean(formikContratInfo.errors.code_apporteur)}
+                                    helperText={formikContratInfo.touched.code_apporteur && formikContratInfo.errors.code_apporteur}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={12}>
+                                <TextField
+                                    fullWidth
+                                    label="Numéro contrat"
+                                    margin="normal"
+                                    {...formikContratInfo.getFieldProps("numero_contrat")}
+                                    error={formikContratInfo.touched.numero_contrat && Boolean(formikContratInfo.errors.numero_contrat)}
+                                    helperText={formikContratInfo.touched.numero_contrat && formikContratInfo.errors.numero_contrat}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={12}>
+                                <TextField
+                                    fullWidth
+                                    label="Numéro attestation"
+                                    margin="normal"
+                                    {...formikContratInfo.getFieldProps("numero_attestation")}
+                                    error={formikContratInfo.touched.numero_attestation && Boolean(formikContratInfo.errors.numero_attestation)}
+                                    helperText={formikContratInfo.touched.numero_attestation && formikContratInfo.errors.numero_attestation}
                                 />
                             </Grid>
                             <Grid item sm={12}>

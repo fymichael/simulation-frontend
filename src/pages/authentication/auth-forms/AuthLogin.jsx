@@ -65,9 +65,9 @@ export default function AuthLogin({ isDemo = false }) {
         navigate('/nyhavana/dashboard');
 
       } else if (userStatus === 0) {
-        setMessage("Désolé, vous n'êtes plus autorisé à accéder au site.");
+        setMessage("Vous n'êtes plus autorisé à accéder au site.");
       } else if (userStatus === 3) {
-        setMessage("Désolé, votre demande d'adhesion n'a pas été approuvé par l'administrateur");
+        setMessage("Votre demande d'adhesion n'a pas été approuvé par l'administrateur");
       } else {
         setMessage("Erreur inconnue. Veuillez réessayer.");
       }

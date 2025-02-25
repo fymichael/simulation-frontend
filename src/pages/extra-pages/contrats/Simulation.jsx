@@ -141,7 +141,16 @@ const Simulation = () => {
         );
     };
 
-    const handleCloseModal = () => {
+    const deleteSimulation = async () => {
+        try {
+            await axios.delete('http://localhost:3030/contrat-simulation');
+        } catch (error) {
+            console.error('Erreur lors de la récupération des contrats :', error);
+        }
+    };
+
+    const handleCloseModal = async () => {
+        await deleteSimulation();
         setOpenModal(false);
         navigate(0);
     };

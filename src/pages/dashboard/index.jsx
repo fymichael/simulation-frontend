@@ -22,7 +22,6 @@ import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import DoNotDisturbOnIcon from '@mui/icons-material/DoNotDisturbOn';
 import { FormControl, InputLabel, Select, MenuItem, Button } from '@mui/material';
 // assets
-import { AlertTwoTone } from '@ant-design/icons';
 import ContratActifsResilies from './ContratActifsResiliesAreaChart';
 import { useState } from 'react';
 import SendToMobileIcon from '@mui/icons-material/SendToMobile';
@@ -32,6 +31,11 @@ import axios from 'axios';
 import SinistreCard from './UniqueVisitorCard';
 import { Chart, PieSeries, Title, Legend } from "@devexpress/dx-react-chart-material-ui";
 import { Animation } from '@devexpress/dx-react-chart';
+import OrderTable from './OrdersTable';
+import ReportAreaChart from './ReportAreaChart';
+import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
+import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
+
 // avatar style
 const avatarSX = {
   width: 36,
@@ -50,17 +54,6 @@ const actionSX = {
 };
 
 // ==============================|| DASHBOARD - DEFAULT ||============================== //
-
-function formatDate(date) {
-  const moisFrancais = [
-    "janvier", "février", "mars", "avril", "mai", "juin",
-    "juillet", "août", "septembre", "octobre", "novembre", "décembre"
-  ];
-  const jour = date.getDate();
-  const mois = moisFrancais[date.getMonth()];
-  const annee = date.getFullYear();
-  return `${jour} ${mois} ${annee}`;
-}
 
 function formatNombre(number) {
   return number?.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -89,8 +82,8 @@ export default function DashboardDefault() {
   };
 
   const data = [
-    { argument: "Contrat résilié", value: globalStat?.nombre_contrat_resilier[0] || 0 }, // Utilisez l'opérateur "?." pour éviter les erreurs si globalStat est undefined ou null
-    { argument: "Contrats actifs", value: globalStat?.nombre_contrat_actifs[0] || 0 }, // Utilisez l'opérateur "?." pour éviter les erreurs si globalStat est undefined ou null
+    { argument: "Contrats actifs", value: globalStat?.nombre_contrat_actifs[0] || 0 },
+    { argument: "Contrat résilié", value: globalStat?.nombre_contrat_resilier[0] || 0 },
   ];
 
 
@@ -129,12 +122,11 @@ export default function DashboardDefault() {
           </Grid>
 
           <Grid item md={8} sx={{ display: { sm: 'none', md: 'block', lg: 'none' } }} />
-
           {/* row 2 */}
           <Grid item xs={12} md={7} lg={8}>
             <EncaissementArriereCard arrieresData={globalStat.arriere_data} encaissementsData={globalStat.encaissement_data} />
           </Grid>
-
+        
           <Grid item xs={12} md={5} lg={4}>
             <Grid container alignItems="center" justifyContent="space-between">
               <Grid item>
@@ -416,13 +408,78 @@ export default function DashboardDefault() {
                 </ListItemButton>
               </List>
             </MainCard>
-            <MainCard sx={{ mt: 2, width: '425px', height: '300px' }}>
+            <MainCard sx={{ mt: 2, width: '340px', height: '300px' }}>
               <Chart data={data} width={300} height={300} >
                 <PieSeries valueField="value" argumentField="argument" />
                 <Legend position="bottom" />
                 <Title text="Répartition des contrats" />
                 <Animation />
               </Chart>
+            </MainCard>
+          </Grid>
+          <Grid item xs={12} md={7} lg={8}>
+            <Grid container alignItems="center" justifyContent="space-between">
+              <Grid item>
+                <Typography variant="h5"> Suivis des paiements </Typography>
+              </Grid>
+              <Grid item />
+            </Grid>
+            <MainCard sx={{ mt: 2 }} content={false}>
+              <OrderTable data={globalStat?.suivi_paiement} />
+            </MainCard>
+          </Grid>
+          <Grid item xs={12} md={5} lg={4}>
+            <Grid container alignItems="center" justifyContent="space-between">
+              <Grid item>
+                <Typography variant="h5">Report des commissions</Typography>
+              </Grid>
+              <Grid item />
+            </Grid>
+            <MainCard sx={{ mt: 2 }} content={false}>
+              <List
+                component="nav"
+                sx={{
+                  px: 0,
+                  py: 0,
+                  '& .MuiListItemButton-root': {
+                    py: 1.5,
+                    '& .MuiAvatar-root': avatarSX,
+                    '& .MuiListItemSecondaryAction-root': { ...actionSX, position: 'relative' }
+                  }
+                }}
+              >
+                <ListItemButton divider>
+                  <ListItemAvatar>
+                    <Avatar sx={{ color: 'primary.main', bgcolor: 'primary.lighter' }}>
+                      <MonetizationOnIcon color='primary'/>
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText primary={<Typography variant="subtitle1">Employé avec le plus de commission obtenus</Typography>} secondary={globalStat?.employe_commission?.utilisateur?.nom+' '+globalStat?.employe_commission?.utilisateur?.prenom+' - '+globalStat?.employe_commission?.utilisateur?.departement?.nom} />
+                  <ListItemSecondaryAction>
+                    <Stack alignItems="flex-end">
+                      <Typography variant="subtitle1" noWrap>
+                       {formatNombre(globalStat?.employe_commission?.montant)} Ar
+                      </Typography>
+                    </Stack>
+                  </ListItemSecondaryAction>
+                </ListItemButton>
+                <ListItemButton divider>
+                  <ListItemAvatar>
+                    <Avatar sx={{ color: 'success.main', bgcolor: 'success.lighter' }}>
+                      <WorkspacePremiumIcon color='success' />
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText primary={<Typography variant="subtitle1">Employé avec le plus d'affaires nouvelles apportées</Typography>} secondary={globalStat?.employe_affaire?.utilisateur?.nom+' '+globalStat?.employe_affaire?.utilisateur?.prenom+' - '+globalStat?.employe_affaire?.utilisateur?.departement?.nom} />
+                  <ListItemSecondaryAction>
+                    <Stack alignItems="flex-end">
+                      <Typography variant="subtitle1" noWrap>
+                       {globalStat?.employe_affaire?.montant}
+                      </Typography>
+                    </Stack>
+                  </ListItemSecondaryAction>
+                </ListItemButton>
+              </List>
+              <ReportAreaChart data={globalStat?.data_agence_commission} xAxisLabels={globalStat?.xAxisLabel}/>
             </MainCard>
           </Grid>
         </>

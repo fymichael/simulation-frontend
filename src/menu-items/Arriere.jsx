@@ -15,7 +15,7 @@ const arriere = {
   children: [
     {
       id: "arriere",
-      title: 'Comparaison des etats de productions',
+      title: 'Comparaison des EPs',
       type: 'item',
       url: '/nyhavana/arrieres',
       icon: icons.MoneyCollectOutlined,

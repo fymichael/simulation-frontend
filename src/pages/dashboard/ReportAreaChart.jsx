@@ -26,17 +26,8 @@ const areaChartOptions = {
     strokeDashArray: 4
   },
   xaxis: {
-    type: 'datetime',
-    categories: [
-      '2018-05-19T00:00:00.000Z',
-      '2018-06-19T00:00:00.000Z',
-      '2018-07-19T01:30:00.000Z',
-      '2018-08-19T02:30:00.000Z',
-      '2018-09-19T03:30:00.000Z',
-      '2018-10-19T04:30:00.000Z',
-      '2018-11-19T05:30:00.000Z',
-      '2018-12-19T06:30:00.000Z'
-    ],
+    type: 'category',
+    categories: [],
     labels: {
       format: 'MMM'
     },
@@ -59,7 +50,7 @@ const areaChartOptions = {
 
 // ==============================|| REPORT AREA CHART ||============================== //
 
-export default function ReportAreaChart() {
+export default function ReportAreaChart({ data, xAxisLabels }) {
   const theme = useTheme();
 
   const { primary, secondary } = theme.palette.text;
@@ -72,9 +63,11 @@ export default function ReportAreaChart() {
       ...prevState,
       colors: [theme.palette.warning.main],
       xaxis: {
+        ...prevState.xaxis,
+        categories: xAxisLabels,
         labels: {
           style: {
-            colors: [secondary, secondary, secondary, secondary, secondary, secondary, secondary, secondary]
+            colors: Array(xAxisLabels.length).fill(secondary)
           }
         }
       },
@@ -87,12 +80,12 @@ export default function ReportAreaChart() {
         }
       }
     }));
-  }, [primary, secondary, line, theme]);
+  }, [primary, secondary, line, theme, xAxisLabels]);
 
   const [series] = useState([
     {
-      name: 'Series 1',
-      data: [58, 115, 28, 83, 63, 75, 35, 55]
+      name: 'Somme commission',
+      data: data
     }
   ]);
 
